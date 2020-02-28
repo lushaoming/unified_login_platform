@@ -1,0 +1,21 @@
+{
+    "name": "bryce/unified-login",
+    "description": "Quick login SDK",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bryce",
+            "email": "lushaoming6@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "php": ">=7.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Bryce\\UnifiedLogin\\": "src/Bryce/UnifiedLogin"
+        }
+    }
+}
