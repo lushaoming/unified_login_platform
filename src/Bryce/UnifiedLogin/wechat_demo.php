@@ -14,9 +14,7 @@ $state = '';
 $credentialFile = '';
 
 require_once __DIR__.'/../../../vendor/autoload.php';
-// 获取跳转链接
-$unified = new \Bryce\UnifiedLogin\UnifiedLogin();
-$link = $unified->generateOauthUrl($appId, $appSecret, $responseType, $state);
+
 
 /** ------------------------------------------------分割线------------------------------------------------------- */
 
@@ -29,8 +27,27 @@ try {
      * 获取失败会抛出UnifiedLoginException异常
      */
     $code = $_GET['code'];
-    $credential = new \Bryce\UnifiedLogin\OAuthTokenCredential($appId, $appSecret, $credentialFile);
+    $credential = new \Bryce\UnifiedLogin\WechatLogin($appId, $appSecret, $credentialFile);
     $userInfo = $credential->credential($code);
+    var_dump($userInfo);
+    /*
+    array(7) {
+        ["nickname"]=>
+      string(10) "幽忧子L"
+            ["avatarUrl"]=>
+      string(126) "https://wx.qlogo.cn/mmopen/vi_32/mto2aoyAxibBNqkmR6oySQKHRT8l3mnabAkdJBzuVTGUuvlVKjMpjdWfiaricJxqKA7UPvcPJ12urSjakrpeqKBJw/132"
+            ["country"]=>
+      string(6) "中国"
+            ["province"]=>
+      string(6) "广东"
+            ["city"]=>
+      string(6) "广州"
+            ["gender"]=>
+      string(1) "1"
+            ["language"]=>
+      string(5) "zh_CN"
+    }
+    */
 } catch (\Bryce\UnifiedLogin\UnifiedLoginException $e) {
     echo $e->getMessage();exit;
 }

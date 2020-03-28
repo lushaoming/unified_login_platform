@@ -7,7 +7,7 @@
  */
 namespace Bryce\UnifiedLogin;
 
-class Base
+abstract class Base
 {
     protected $env = 'production';
     protected $appId;
@@ -29,15 +29,7 @@ class Base
     {
     }
 
-    protected function getApiDomain()
-    {
-        switch ($this->env) {
-            case 'sandbox':
-                return 'http://oauth.qqoauth.me';
-            default:
-                return 'http://oauthv2.lushaoming.site';
-        }
-    }
+    abstract protected function getApiDomain();
 
     /**
      * curl操作

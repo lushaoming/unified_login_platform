@@ -2,12 +2,12 @@
 /**
  * Created by PhpStorm.
  * User: Shannon
- * Date: 2020/2/28
- * Time: 12:25
+ * Date: 2020/3/28
+ * Time: 15:15
  */
 namespace Bryce\UnifiedLogin;
 
-class OAuthTokenCredential extends QQ
+class WechatLogin extends Wechat
 {
     /**
      * OAuthTokenCredential constructor.
@@ -20,7 +20,7 @@ class OAuthTokenCredential extends QQ
     {
         $this->appId = $appId;
         $this->appSecret = $appSecret;
-        $this->credentialFile = $credentialFile ?: __DIR__.'/access_token.json';
+        $this->credentialFile = $credentialFile ?: __DIR__.'/access_token_wechat.json';
     }
 
     /**
@@ -37,31 +37,31 @@ class OAuthTokenCredential extends QQ
     }
 
     /**
-     * @return mixed
+     * @return bool|mixed|string
      * @throws UnifiedLoginException
      */
-    public function getAccessToken()
+    private function getAccessToken()
     {
         if (file_exists($this->credentialFile)) {
             $data = json_decode(file_get_contents($this->credentialFile), true);
             if ($this->checkTokenFile($data)) return $data['access_token'];
         }
 
-        $url = $this->getApiDomain()."/api/client/getAccessToken?app_id={$this->appId}&app_secret={$this->appSecret}";
 
+        $url = $this->getApiDomain() . "/scau_info/oauth/v1/web/token/get-token?app_id={$this->appId}&app_secret={$this->appSecret}";
         $res = self::curl($url);
         $res = json_decode($res, true);
         if (!$res) {
             throw new UnifiedLoginException(
-                'An unexpected error occurred while obtaining the Access Token, please check the request parameters',
+                'An unexpected error occurred while obtaining the access token, please check the request parameters',
                 500
             );
-        } elseif ($res['code'] != 200) {
-            throw new UnifiedLoginException($res['msg'], $res['code']);
+        } elseif (isset($res['code'])) {
+            throw new UnifiedLoginException($res['msg'], 400);
         }
 
-        file_put_contents($this->credentialFile, json_encode($res['data']));
-        return $res['data']['access_token'];
+        file_put_contents($this->credentialFile, json_encode($res));
+        return $res['access_token'];
     }
 
     /**
@@ -69,9 +69,9 @@ class OAuthTokenCredential extends QQ
      * @return mixed
      * @throws UnifiedLoginException
      */
-    public function getOpenid($code)
+    private function getOpenid($code)
     {
-        $url = $this->getApiDomain()."/api/user/getOpenid?access_token={$this->accessToken}&code={$code}";
+        $url = $this->getApiDomain() . "/scau_info/oauth/v1/web/user/get-openid?app_id={$this->appId}&app_secret={$this->appSecret}&code={$code}&grant_type=authorization_code";
         $res = self::curl($url);
         $res = json_decode($res, true);
         if (!$res) {
@@ -79,20 +79,20 @@ class OAuthTokenCredential extends QQ
                 'An unexpected error occurred while obtaining the Open ID, please check the request parameters',
                 500
             );
-        } elseif ($res['code'] != 200) {
-            throw new UnifiedLoginException($res['msg'], $res['code']);
+        } elseif ($res['status']) {
+            throw new UnifiedLoginException($res['msg'], 400);
         }
-        return $res['data']['openid'];
+        return $res['openid'];
     }
 
     /**
      * @param $openid
-     * @return mixed
+     * @return bool|mixed|string
      * @throws UnifiedLoginException
      */
-    public function getUserInfo($openid)
+    private function getUserInfo($openid)
     {
-        $url = $this->getApiDomain()."/api/user/getUserInfo?access_token={$this->accessToken}&openid={$openid}";
+        $url = $this->getApiDomain() . "/scau_info/oauth/v1/web/user/get-user-info?app_id={$this->appId}&access_token={$this->accessToken}&openid={$openid}";
         $res = self::curl($url);
         $res = json_decode($res, true);
         if (!$res) {
@@ -100,21 +100,22 @@ class OAuthTokenCredential extends QQ
                 'An unexpected error occurred while obtaining the user info, please check the request parameters',
                 500
             );
-        } elseif ($res['code'] != 200) {
-            throw new UnifiedLoginException($res['msg'], $res['code']);
+        } elseif ($res['status']) {
+            throw new UnifiedLoginException($res['msg'], 400);
         }
-        return $res['data'];
+        return $res;
     }
 
     protected function checkTokenFile($data)
     {
-        if (!$data) return false;
-        if (count($data) != 3) return false;
+        if (!$data) return 1;
+        if (count($data) != 3) return 2;
 
-        if (empty($data['access_token'])) return false;
-        if (!isset($data['create_time'])) return false;
-        if (!isset($data['expire_time']) || $data['expire_time'] < time() + 600) return false;
+        if (empty($data['access_token'])) return 3;
+        if (!isset($data['expire_time']) || $data['expire_time'] < time() + 600) return 4;
 
         return true;
     }
+
+
 }
